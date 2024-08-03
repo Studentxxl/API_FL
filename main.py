@@ -64,10 +64,26 @@ def register():
         validate_result['token'] = ''
         return validate_result
 
-    # ХЕШИРОВАНИЕ ПАРОЛЯ (если пройдена валидация)
-    #
-    hashed_password = generate_password_hash(password)
+    # Проверка логина в базе
+    exist_login = {}
+    login_query = f"SELECT login FROM users WHERE login = '{login}'"
+    base_response = func.select(command=login_query)
+    if base_response:
+        exist_login['exist_login'] = base_response[0][0]
+        exist_login['token'] = ''
+        return exist_login
+    if exist_login == {}:
+        # ХЕШИРОВАНИЕ ПАРОЛЯ (если в базе нет логина)
+        hashed_password = generate_password_hash(password)
 
+        # Создание токена сессии (md5)
+
+        # Запись в базу
+
+        # Ответ фронтенду
+
+
+        return {}
 
 
 # hash = generate_password_hash('2w23e34')
