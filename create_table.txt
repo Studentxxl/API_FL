@@ -1,0 +1,35 @@
+CREATE TABLE users(
+    id SERIAL PRIMARY KEY,
+    login VARCHAR(48) UNIQUE NOT NULL,
+    passhash VARCHAR(254) NOT NULL
+);
+
+
+CREATE TABLE emails(
+    id INTEGER UNIQUE NOT NULL,
+    email VARCHAR(48) NOT NULL
+);
+
+
+CREATE TABLE users_emails(
+    user_id INTEGER UNIQUE NOT NULL,
+    email_id INTEGER UNIQUE NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+	FOREIGN KEY (email_id) REFERENCES emails (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE sessions(
+    id INTEGER,
+    user_id INTEGER,
+    token_id INTEGER UNIQUE,
+	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE tokens(
+    id INTEGER,
+    token VARCHAR(254),
+    expire_date TIMESTAMP,
+	FOREIGN KEY (id) REFERENCES sessions (token_id) ON DELETE CASCADE
+);
