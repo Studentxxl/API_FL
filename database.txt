@@ -4,5 +4,12 @@ CREATE TABLE users(
     passhash VARCHAR(254) NOT NULL
 );
 
-
+CREATE TABLE sessions(
+    id INTEGER,
+    user_id INTEGER UNIQUE,
+    token VARCHAR(254),
+    date_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP + '1 week'::interval,
+	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
 

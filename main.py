@@ -3,6 +3,7 @@ import psycopg2
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 import func
+import hashlib
 
 app = Flask(__name__)
 
@@ -62,22 +63,15 @@ def register():
         last_passhash = return_data[0][2]
         if last_login == login and last_passhash == hashed_password:
             # Создание токена сессии (md5)
-            print()
+            token = hashlib.md5(f"{login}".encode()).hexdigest()
+            #
+            session = func.insert_return_id(command=f"INSERT INTO sessions (id, user_id, token) VALUES ({last_id}, {last_id}, '{token}') RETURNING token")
+            return {'msg': 'Успешная регистрация', 'token': f'{session[0][0]}'}
         else:
             return func.msg_validate_template(msg='Пользователь не зарегистрирован')
 
 
-
-        # Ответ фронтенду
-
-
-
-
-
-# hash = generate_password_hash('2w23e34')
 # check_password_hash(hash, '2w2e34')
-
-
 
 if __name__ == "__main__":
     app.run()
