@@ -80,7 +80,7 @@ def msg_validate_template(msg):
 
 # конец блока
 
-
+##
 
 
 
