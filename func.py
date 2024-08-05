@@ -1,5 +1,5 @@
 import psycopg2
-
+import json
 
 # ****************
 # Блок обращений к базе
@@ -76,12 +76,12 @@ allowed_password_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 
 def msg_validate_template(msg):
     validate_result = dict({'msg:': msg, 'token': ''})
-    return validate_result
+    json_data = json.dumps(validate_result)
+    return json_data
 
 # конец блока
 
 ##
-
 
 
 

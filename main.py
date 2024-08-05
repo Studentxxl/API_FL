@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request, make_response
 import psycopg2
 from werkzeug.security import generate_password_hash
@@ -66,7 +68,7 @@ def register():
             token = hashlib.md5(f"{login}".encode()).hexdigest()
             #
             session = func.insert_return_id(command=f"INSERT INTO sessions (id, user_id, token) VALUES ({last_id}, {last_id}, '{token}') RETURNING token")
-            return {'msg': 'Успешная регистрация', 'token': f'{session[0][0]}'}
+            return json.dumps({'msg': 'Успешная регистрация', 'token': f'{session[0][0]}'})
         else:
             return func.msg_validate_template(msg='Пользователь не зарегистрирован')
 
