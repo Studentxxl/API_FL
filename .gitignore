@@ -1,0 +1,7 @@
+.idea/
+.venv/
+__pycache__/
+Archive/
+create_table__OLD.txt
+test2.py
+git.txt
