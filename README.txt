@@ -30,4 +30,3 @@ server_start.bat
 Запуск теста
 test_start.bat
 
-#
