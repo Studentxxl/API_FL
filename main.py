@@ -1,5 +1,5 @@
 import json
-
+import re
 from flask import Flask, request, make_response
 import psycopg2
 from werkzeug.security import generate_password_hash
@@ -27,26 +27,18 @@ def register():
     password = request_data['password']
 
     # * ВАЛИДАЦИЯ логина
-    if len(login) < 8 or len(login) > 16:
-        return func.msg_validate_template(msg='Длина логина должна быть от 8 до 16')
-
-    invalid_login_characters = ''
-    for character in login:
-        if character not in func.allowed_login_characters:
-            invalid_login_characters += character
-    if invalid_login_characters:
-        return func.msg_validate_template(msg='Недопустимые символы в поле <логин>')
+    if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])[A-Za-z]{6,}$', string=login) is None:
+        msg = 'Поле логин должно быть не меньше 6 символов с латинскими буквами A-Z a-z'
+        validate_result = dict({'msg:': msg, 'token': ''})
+        json_response = json.dumps(validate_result)
+        return json_response
 
     # * ВАЛИДАЦИЯ пароля
-    if len(password) < 8 or len(password) > 16:
-        return func.msg_validate_template(msg='Длина пароля должна быть от 8 до 16')
-
-    invalid_password_characters = ''
-    for character in password:
-        if character not in func.allowed_password_characters:
-            invalid_password_characters += character
-    if invalid_password_characters:
-        return func.msg_validate_template(msg='Недопустимые символы в поле <пароль>')
+    if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$', string=password) is None:
+        msg = 'Поле пароль должно быть не меньше 8 символов с латинскими буквами A-Z a-z, цифрами 0-9'
+        validate_result = dict({'msg:': msg, 'token': ''})
+        json_response = json.dumps(validate_result)
+        return json_response
 
     # Проверка логина в базе
     base_response = func.select(command=f"SELECT login FROM users WHERE login = '{login}'")

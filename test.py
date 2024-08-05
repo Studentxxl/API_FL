@@ -18,4 +18,4 @@ def test_1(login, password):
 # валидные данные:
 # логин: 8-16 символов, латинские буквы
 # пароль: 8-16 символов, латинские буквы, цифры 0-9, символы -_
-print('результат теста 1:', test_1(login='gtrertyWW', password='123456789'))
+print('результат теста 1:', test_1(login='DenisHammswer', password='qqqqqqqqqqqqqq123Q'))
