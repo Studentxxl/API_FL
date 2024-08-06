@@ -1,6 +1,6 @@
 import json
 import re
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 import psycopg2
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -12,7 +12,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return 'Hello! I am API'
+    test_result = func.msg_validate_template(msg='test')
+    return test_result
 
 # ****************************
 # БЛОК РЕГИСТРАЦИИ
@@ -30,14 +31,14 @@ def register():
     if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])[A-Za-z]{6,}$', string=login) is None:
         msg = 'Поле логин должно быть не меньше 6 символов с латинскими буквами A-Z a-z'
         validate_result = dict({'msg:': msg, 'token': ''})
-        json_response = json.dumps(validate_result)
+        json_response = jsonify(validate_result)
         return json_response
 
     # * ВАЛИДАЦИЯ пароля
     if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$', string=password) is None:
         msg = 'Поле пароль должно быть не меньше 8 символов с латинскими буквами A-Z a-z, цифрами 0-9'
         validate_result = dict({'msg:': msg, 'token': ''})
-        json_response = json.dumps(validate_result)
+        json_response = jsonify(validate_result)
         return json_response
 
     # Проверка логина в базе

@@ -1,6 +1,6 @@
 import psycopg2
 import json
-
+from flask import jsonify
 
 # ****************
 # Блок запросов к базе
@@ -68,7 +68,7 @@ def select(command):
 
 def msg_validate_template(msg):
     validate_result = dict({'msg:': msg, 'token': ''})
-    json_response = json.dumps(validate_result)
+    json_response = jsonify(validate_result)
     return json_response
 
 # конец блока
