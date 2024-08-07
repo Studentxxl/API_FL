@@ -1,6 +1,6 @@
 import json
 import requests
-import psycopg2
+
 
 
 def test_1(login, password):
@@ -18,4 +18,4 @@ def test_1(login, password):
 # валидные данные:
 # логин: 8-16 символов, латинские буквы
 # пароль: 8-16 символов, латинские буквы, цифры 0-9, символы -_
-print('результат теста 1:', test_1(login='dertyqwQ*', password='qqqqqqqqqqqqqq123Q'))
+print('результат теста 1:', test_1(login='fdhertygqwQll', password='qqqgghqqqqqqqqqqq123Q'))
