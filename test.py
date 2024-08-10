@@ -19,7 +19,7 @@ def test_1(login, password):
 # валидные данные:
 # логин: 8-16 символов, латинские буквы
 # пароль: 8-16 символов, латинские буквы, цифры 0-9, символы -_
-print('результат теста 1:', test_1(login='fqwQll', password='qqqgqqqqqq123Q'))
+print('результат теста 1:', test_1(login='azAZl09__', password='zA09_+6666666666'))
 
 
 
@@ -63,3 +63,16 @@ def salts(login, password):
         return last_id
 
 '''
+
+
+"""
+# * ВАЛИДАЦИЯ логина
+    if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])[A-Za-z]{6,}$', string=login) is None:
+        msg = 'Поле логин должно быть не меньше 6 символов с латинскими буквами A-Z a-z'
+        return jsonify(msg=msg, token='')
+
+    # * ВАЛИДАЦИЯ пароля
+    if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$', string=password) is None:
+        msg = 'Поле пароль должно быть не меньше 8 символов с латинскими буквами A-Z a-z, цифрами 0-9'
+        return jsonify(msg=msg, token='')
+"""
