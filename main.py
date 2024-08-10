@@ -1,16 +1,18 @@
-import json
+import sys
+sys.path.append("..")
 import re
 from flask import Flask, request, jsonify
-import func
 import hashlib
-
+from modules import db_func
+from secret import salt
+from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
-    test_result = func.msg_validate_template(msg='test')
-    return test_result
+    msg = 'test'
+    return jsonify(msg=msg)
 
 
 # ****************************
@@ -20,6 +22,7 @@ def index():
 def register():
     # Формирует словарь из полученного запроса (из json строки)
     request_data = request.get_json()
+    """ (комментарий для себя): нужна ли здесь проверка на пустые поля запроса """
 
     # Получает значения ключей name и password
     login = request_data['login']
@@ -28,33 +31,42 @@ def register():
     # * ВАЛИДАЦИЯ логина
     if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])[A-Za-z]{6,}$', string=login) is None:
         msg = 'Поле логин должно быть не меньше 6 символов с латинскими буквами A-Z a-z'
-        validate_result = dict({'msg:': msg, 'token': ''})
-        json_response = jsonify(validate_result)
-        return json_response
+        return jsonify(msg=msg, token='')
 
     # * ВАЛИДАЦИЯ пароля
     if re.match(pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$', string=password) is None:
         msg = 'Поле пароль должно быть не меньше 8 символов с латинскими буквами A-Z a-z, цифрами 0-9'
-        validate_result = dict({'msg:': msg, 'token': ''})
-        json_response = jsonify(validate_result)
-        return json_response
+        return jsonify(msg=msg, token='')
 
     # Проверка логина в базе
-    base_response = func.select(command=f"SELECT login FROM users WHERE login = '{login}'")
+    base_response = db_func.select(command=f"SELECT login FROM users WHERE login = '{login}'")
     if base_response:
-        return func.msg_validate_template(msg='Логин занят')
+        msg = 'Логин занят'
+        return jsonify(msg=msg, token='')
     else:
-        # Запись пользователя в users, получение last_id
-        result = func.salts(login=login, password=password)
-        if result:
-            last_id = result
+        # получение last_id
+        # Соленый пароль
+        salts_password = password + salt.salt
+        # Хеш соленого пароля
+        salts_password = generate_password_hash(salts_password)
+        # Запись в базу
+        return_data = db_func.insert_return_id(command=f"INSERT INTO users (login, passhash) "
+                                                       f"VALUES ('{login}', '{salts_password}') "
+                                                       f"RETURNING id, login, passhash")
+        last_id = return_data[0][0]
+        last_login = return_data[0][1]
+        last_passhash = return_data[0][2]
+        # Проверка
+        if last_login == login and last_passhash == salts_password:
             # Создание токена сессии (md5)
             token = hashlib.md5(f"{login}".encode()).hexdigest()
             #
-            session = func.insert_return_id(command=f"INSERT INTO sessions (id, user_id, token) VALUES ({last_id}, {last_id}, '{token}') RETURNING token")
-            return jsonify({'msg': 'Успешная регистрация', 'token': f'{session[0][0]}'})
+            session = db_func.insert_return_id(command=f"INSERT INTO sessions (id, user_id, token) "
+                                                       f"VALUES ({last_id}, {last_id}, '{token}') RETURNING token")
+            return jsonify(msg='Успешная регистрация', token=f'{session[0][0]}')
         else:
-            return func.msg_validate_template(msg='Пользователь не зарегистрирован')
+            msg = 'Пользователь не зарегистрирован'
+            return jsonify(msg=msg, token='')
 
 
 

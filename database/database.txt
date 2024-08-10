@@ -1,8 +1,7 @@
 CREATE TABLE users(
     id SERIAL PRIMARY KEY,
     login VARCHAR(48) UNIQUE NOT NULL,
-    passhash VARCHAR(254) NOT NULL,
-    salt VARCHAR(254) NOT NULL
+    passhash VARCHAR(254) NOT NULL
 );
 
 CREATE TABLE sessions(

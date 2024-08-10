@@ -1,7 +1,9 @@
 .idea/
 .venv/
+other/
 __pycache__/
 Archive/
-create_table__OLD.txt
-test2.py
-git.txt
+database/create_table__OLD.txt
+test.py
+run.bat
+test.bat
