@@ -1,15 +1,26 @@
-CREATE TABLE users(
-    id SERIAL PRIMARY KEY,
-    login VARCHAR(48) UNIQUE NOT NULL,
-    passhash VARCHAR(254) NOT NULL
+-- public.users определение
+-- Drop table
+-- DROP TABLE public.users;
+
+CREATE TABLE public.users (
+	id serial4 NOT NULL,
+	login varchar(13) NOT NULL,
+	passhash varchar(65) NOT NULL,
+	CONSTRAINT users_login_key UNIQUE (login),
+	CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
-CREATE TABLE sessions(
-    id INTEGER,
-    user_id INTEGER UNIQUE,
-    token VARCHAR(254),
-    date_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    date_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP + '1 week'::interval,
-	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
+-- public.sessions определение
+-- Drop table
+-- DROP TABLE public.sessions;
 
+CREATE TABLE public.sessions (
+	id serial4 NOT NULL,
+	user_id int4 NULL,
+	"token" varchar NOT NULL,
+	date_start timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	date_end timestamp DEFAULT (CURRENT_TIMESTAMP + '7 days'::interval) NOT NULL,
+	CONSTRAINT sessions_pk PRIMARY KEY (id),
+	CONSTRAINT sessions_user_id_key UNIQUE (user_id),
+	CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE
+);

@@ -4,6 +4,9 @@ other/
 __pycache__/
 Archive/
 database/create_table__OLD.txt
-test.py
+test1.py
 run.bat
-test.bat
+test1.bat
+test2.bat
+test1.py
+test2.py

@@ -1,1 +1,1 @@
-salt = 'RCCIMesfMazl9YhjWzyGoP7rwupeiKINKL8417AzmvxkDwWi'
+CONST_SALT = 'RCCIMesfMazl9YhjWzyGoP7rwupeiKINKL8417AzmvxkDwWi'
