@@ -1,1 +1,0 @@
-START C:\API_FL\.venv\Scripts\python.exe C:\API_FL\main.py
