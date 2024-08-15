@@ -3,10 +3,7 @@
 other/
 __pycache__/
 Archive/
+tests/
+API_FL-changed.zip
 database/create_table__OLD.txt
-test1.py
 run.bat
-test1.bat
-test2.bat
-test1.py
-test2.py
