@@ -1,19 +1,14 @@
 import sys
 sys.path.append("..")
 from flask import Flask, request, jsonify
-import hashlib
+from werkzeug.security import generate_password_hash
+from modules import characters_validate
 from modules import db_func
-from modules import valid_token
-from secret import salt
-from werkzeug.security import generate_password_hash, check_password_hash
-from modules import validate
+from modules import answer
+from modules import field_validate
+from modules import hash
 
 app = Flask(__name__)
-
-
-def hash_password(pwd):
-    salted_password = pwd.encode() + salt.CONST_SALT.encode()
-    return hashlib.sha256(salted_password).hexdigest()
 
 
 @app.route('/')
@@ -30,26 +25,27 @@ def register():
     # Словарь из POST - запроса
     request_data = request.get_json()
 
-    # Объекты login, password из POST - запроса
-    login = request_data['login']
-    password = request_data['password']
+    # Проверка наличия полей 'login' 'password', проверка на тип 'str'
+    result = field_validate.check_fields_in_dict(field_1='login', field_2='password', dct=request_data)
+    if result:
+        login = result[0]
+        password = result[1]
 
-    # Проверка на тип 'str'
-    if isinstance(password, str) and isinstance(login, str):
         # Валидатор
-        if (validate.validateWithPattern(validate.Patterns.LOGIN.value, login)
-                and validate.validateWithPattern(validate.Patterns.PASSWORD.value, password)):
+        if (characters_validate.validateWithPattern(characters_validate.Patterns.LOGIN.value, login)
+                and characters_validate.validateWithPattern(characters_validate.Patterns.PASSWORD.value, password)):
             # SELECT из базы
-            base_response = db_func.select(command=f"SELECT login FROM users WHERE login = '{login}'")
+            base_response = db_func.connect_without_commit(command=f"SELECT login FROM users "
+                                                                   f"WHERE login = '{login}'")
 
             # Хеш соленого пароля
             if not base_response:
-                salts_password = hash_password(password)
+                salts_password = hash.hash_password(pwd=password)
 
                 # Запись в базу
-                return_data = db_func.insert_return_id(command=f"INSERT INTO users (login, passhash) "
-                                                               f"VALUES ('{login}', '{salts_password}') "
-                                                               f"RETURNING id, login, passhash")
+                return_data = db_func.connect_with_commit(command=f"INSERT INTO users (login, passhash) "
+                                                                  f"VALUES ('{login}', '{salts_password}') "
+                                                                  f"RETURNING id, login, passhash")
 
                 if return_data:
                     # Проверка корректности записи в базу
@@ -57,38 +53,29 @@ def register():
                         # Создание сессии, запись в базу
                         generated_hash = generate_password_hash(login)
                         token = generated_hash.split('$')[2]
-                        session = db_func.insert_return_id(command=f"INSERT INTO sessions (id, user_id, token) "
-                                                                   f"VALUES ({return_data[0][0]}, {return_data[0][0]}, "
-                                                                   f"'{token}') RETURNING token")
+                        session = db_func.connect_with_commit(command=f"INSERT INTO sessions (id, user_id, token) "
+                                                                      f"VALUES ({return_data[0][0]}, {return_data[0][0]}, "
+                                                                      f"'{token}') RETURNING token")
 
                         # Проверка корректности записи в базу
-                        if session[0][0] == token:
-                            return (jsonify(msg='Успешная регистрация', token=f'{session[0][0]}'),
-                                    200, {'Content-Type': 'application/json; charset=utf-8'})
+                        if token == session[0][0]:
+                            msg = 'Успешная регистрация'
+                            return answer.for_frontend(msg=msg, token=session[0][0], code=200)
                         else:
                             msg = 'Пользователь не зарегистрирован'
-                            return (jsonify(msg=msg, token=''),
-                                    405, {'Content-Type': 'application/json; charset=utf-8'})
+                            return answer.for_frontend(msg=msg)
                     else:
-                        return (jsonify(msg='', token=''),
-                                405, {'Content-Type': 'application/json; charset=utf-8'})
+                        return answer.for_frontend()
                 else:
-                    return (jsonify(msg='', token=''),
-                            405, {'Content-Type': 'application/json; charset=utf-8'})
+                    return answer.for_frontend()
             else:
                 msg = f'Логин занят'
-                return (jsonify(msg=msg, token=''),
-                        405, {'Content-Type': 'application/json; charset=utf-8'})
+                return answer.for_frontend(msg=msg)
         else:
-            msg = f'Логин или пароль неверный'
-            return (jsonify(msg=msg, token=''),
-                    405, {'Content-Type': 'application/json; charset=utf-8'})
+            msg = f'Неверный логин или пароль'
+            return answer.for_frontend(msg=msg)
     else:
-        return (jsonify(msg='', token=''),
-                405, {'Content-Type': 'application/json; charset=utf-8'})
-
-
-
+        return answer.for_frontend()
 
 # конец блока регистрации
 
@@ -98,32 +85,48 @@ def register():
 # ****************************
 @app.route(rule='/auth', methods=['POST'])
 def auth():
-    # Формирует словарь из полученного запроса (из json строки)
+    # Словарь из POST - запроса
     request_data = request.get_json()
-    for value in request_data.values():
-        if isinstance(value, str):
-            return (jsonify({}), 400)
 
-    # Получает значения ключей login и password
-    login = request_data['login']
-    password = request_data['password']
-    # Валидация
-    if (validate.validateWithPattern(validate.Patterns.LOGIN.value, login)
-            and validate.validateWithPattern(validate.Patterns.PASSWORD.value, password)):
-        base_hash = db_func.select(command=f"SELECT passhash FROM users WHERE login = '{login}'")
-        if base_hash:
-            user_hash = hash_password(pwd=password)
-            if base_hash[0][0] == user_hash:
+    # Проверка наличия полей 'login' 'password', проверка на тип 'str'
+    result = field_validate.check_fields_in_dict(field_1='login', field_2='password', dct=request_data)
+    if result:
+        login = result[0]
+        password = result[1]
 
-                return jsonify(msg='make session')
+        # Валидация
+        if (characters_validate.validateWithPattern(characters_validate.Patterns.LOGIN.value, login)
+                and characters_validate.validateWithPattern(characters_validate.Patterns.PASSWORD.value, password)):
+            base_response = db_func.connect_without_commit(command=f"SELECT passhash, id "
+                                                                   f"FROM users "
+                                                                   f"WHERE login = '{login}'")
+            if base_response:
+                user_hash = hash.hash_password(pwd=password)
+                if base_response[0][0] == user_hash:
+                    # Создание сессии, запись в базу
+                    generated_hash = generate_password_hash(login)
+                    token = generated_hash.split('$')[2]
+                    command = f"""UPDATE sessions SET token = '{token}', 
+                    date_start = CURRENT_TIMESTAMP, 
+                    date_end = CURRENT_TIMESTAMP + '7 days'::interval 
+                    WHERE id = {base_response[0][1]} RETURNING token"""
+                    session = db_func.connect_with_commit(command=command)
+
+                    # Проверка корректности записи в базу
+                    if token == session[0][0]:
+                        return answer.for_frontend(token=session[0][0], code=200)
+                    else:
+                        return answer.for_frontend()
+                else:
+                    return answer.for_frontend()
             else:
-                return jsonify(msg='неверный пароль')
+                return answer.for_frontend()
         else:
-            return jsonify(msg='нет такого логина')
+            msg = 'Неверный логин или пароль'
+            return answer.for_frontend(msg=msg)
+    else:
+        return answer.for_frontend()
 
-    return jsonify(msg='n/y')
-
-""" # БЛОК АУТЕНТИФИКАЦИИ НЕ ЗАКОНЧЕН"""
 # конец блока аутентификации
 
 
@@ -135,37 +138,32 @@ def user_token():
     # Словарь из POST - запроса
     request_data = request.get_json()
 
-    # Объекты login, token из POST - запроса
-    login = request_data['login']
-    token = request_data['token']
+    # Проверка наличия полей 'login' 'token', проверка на тип 'str'
+    result = field_validate.check_fields_in_dict(field_1='login', field_2='token', dct=request_data)
+    if result:
+        login = result[0]
+        token = result[1]
 
-    # Проверка токена на тип 'str'
-    if isinstance(token, str) and isinstance(login, str):
         # Валидатор
-        if validate.validateWithPattern(validate.Patterns.LOGIN.value, login) and token != '':
+        if characters_validate.validateWithPattern(characters_validate.Patterns.LOGIN.value, login) and token != '':
             # JOIN из базы
-            request_result = db_func.select(command=f"SELECT users.id, users.login, sessions.token, "
-                                                    f"sessions.date_end FROM users "
-                                                    f"JOIN sessions ON users.id = sessions.user_id "
-                                                    f"WHERE users.login = '{login}'")
+            command = f"""SELECT users.id, users.login, sessions.token, sessions.date_end 
+            FROM users JOIN sessions ON users.id = sessions.user_id 
+            WHERE users.login = '{login}' 
+            AND date_end > CURRENT_TIMESTAMP AND date_start < CURRENT_TIMESTAMP"""
+            request_result = db_func.connect_without_commit(command=command)
             #  Проверка даты, сравнение токена
             if request_result:
-                check_date = valid_token.token_end_date(date=request_result[0][3])
-                if check_date == 'date valid' and token == request_result[0][2]:
-                    return (jsonify(token=request_result[0][2]),
-                            200, {'Content-Type': 'application/json; charset=utf-8'})
+                if token == request_result[0][2]:
+                    return answer.for_frontend(token=request_result[0][2], code=200)
                 else:
-                    return (jsonify(token=''),
-                            405, {'Content-Type': 'application/json; charset=utf-8'})
+                    return answer.for_frontend()
             else:
-                return (jsonify(token=''),
-                        405, {'Content-Type': 'application/json; charset=utf-8'})
+                return answer.for_frontend()
         else:
-            return (jsonify(token=''),
-                    405, {'Content-Type': 'application/json; charset=utf-8'})
+            return answer.for_frontend()
     else:
-        return (jsonify(token=''),
-                405, {'Content-Type': 'application/json; charset=utf-8'})
+        return answer.for_frontend()
 
 # конец блока проверки токена
 

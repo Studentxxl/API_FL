@@ -9,7 +9,8 @@ from database import db_config
 def makeDBConnect():
     return psycopg2.connect(dbname=db_config.dbname, user=db_config.user, password=db_config.password, host=db_config.host, port=db_config.port)
 
-def insert_return_id(command):
+
+def connect_with_commit(command):
     '''  '''
     # *
     try:
@@ -23,36 +24,23 @@ def insert_return_id(command):
         conn.close()
         return result
         # *
-    except psycopg2.OperationalError as e:
-        print(f"The error '{e}' occurred")
+    except:
+        pass
 
 
-def insert(command):
+def connect_without_commit(command):
     '''  '''
-    # *
     try:
         conn = makeDBConnect()
         # *
         cursor = conn.cursor()
         cursor.execute(command)
-        conn.commit()
+        result = cursor.fetchall()
         cursor.close()
         conn.close()
-        # *
-    except psycopg2.OperationalError as e:
-        print(f"The error '{e}' occurred")
-
-
-def select(command):
-    '''  '''
-    conn = makeDBConnect()
-    # *
-    cursor = conn.cursor()
-    cursor.execute(command)
-    result = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return result
+        return result
+    except:
+        pass
 
 # конец блока
 
