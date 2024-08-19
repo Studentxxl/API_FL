@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    msg = 'test'
+    msg = ''
     return jsonify(msg=msg)
 
 
@@ -149,8 +149,8 @@ def user_token():
             # JOIN из базы
             command = f"""SELECT users.id, users.login, sessions.token, sessions.date_end 
             FROM users JOIN sessions ON users.id = sessions.user_id 
-            WHERE users.login = '{login}' 
-            AND date_end > CURRENT_TIMESTAMP AND date_start < CURRENT_TIMESTAMP"""
+            WHERE users.login = '{login}' AND sessions.token = '{token}'
+            AND date_end > CURRENT_TIMESTAMP"""
             request_result = db_func.connect_without_commit(command=command)
             #  Проверка даты, сравнение токена
             if request_result:
